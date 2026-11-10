@@ -76,7 +76,7 @@ def calibrate_camera(images):
 
     rows = 7  # number of checkerboard rows.
     columns = 7  # number of checkerboard columns.
-    world_scaling = 1.  # change this to the real world square size. Or not.
+    world_scaling = 1.8  # change this to the real world square size. Or not.
 
     # coordinates of squares in the checkerboard world space
     objp = np.zeros((rows * columns, 3), np.float32)
@@ -121,22 +121,7 @@ def calibrate_camera(images):
 
     return mtx, dist
 
-def stereo_calibrate(mtx1, dist1, mtx2, dist2, frames_folder):
-    # read the synched frames
-    images_names = glob.glob(frames_folder)
-    images_names = sorted(images_names)
-    c1_images_names = images_names[:len(images_names) // 2]
-    c2_images_names = images_names[len(images_names) // 2:]
-
-    c1_images = []
-    c2_images = []
-    for im1, im2 in zip(c1_images_names, c2_images_names):
-        _im = cv2.imread(im1, 1)
-        c1_images.append(_im)
-
-        _im = cv2.imread(im2, 1)
-        c2_images.append(_im)
-
+def stereo_calibrate(mtx1, dist1, mtx2, dist2, left_cal_images, right_cal_images):
     # change this if stereo calibration not good.
     criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 100, 0.0001)
 
@@ -150,8 +135,8 @@ def stereo_calibrate(mtx1, dist1, mtx2, dist2, frames_folder):
     objp = world_scaling * objp
 
     # frame dimensions. Frames should be the same size.
-    width = c1_images[0].shape[1]
-    height = c1_images[0].shape[0]
+    width = left_cal_images[0].shape[1]
+    height = left_cal_images[0].shape[0]
 
     # Pixel coordinates of checkerboards
     imgpoints_left = []  # 2d points in image plane.
@@ -160,7 +145,7 @@ def stereo_calibrate(mtx1, dist1, mtx2, dist2, frames_folder):
     # coordinates of the checkerboard in checkerboard world space.
     objpoints = []  # 3d point in real world space
 
-    for frame1, frame2 in zip(c1_images, c2_images):
+    for frame1, frame2 in zip(left_cal_images, right_cal_images):
         gray1 = cv2.cvtColor(frame1, cv2.COLOR_BGR2GRAY)
         gray2 = cv2.cvtColor(frame2, cv2.COLOR_BGR2GRAY)
         c_ret1, corners1 = cv2.findChessboardCorners(gray1, (rows, columns), None)

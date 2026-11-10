@@ -29,7 +29,9 @@ def process_video(camera):
     return center_points
 
 def main():
-    mtx1, dist1 = tools.calibrate_camera(images_folder='left_cal_images/*')
+    left_cap=cv2.VideoCapture(1)
+    right_cap=cv2.VideoCapture(2)
+    mtx1, dist1 = tools.calibrate_camera(left)
     mtx2, dist2 = tools.calibrate_camera(images_folder='right_cal_images/*')
 
     R, T = tools.stereo_calibrate(mtx1, dist1, mtx2, dist2, 'synched/*')
