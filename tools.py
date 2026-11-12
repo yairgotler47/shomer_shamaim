@@ -1,7 +1,7 @@
 import cv2
-import glob
 import numpy as np
 import matplotlib.pyplot as plt
+from cvzone.ColorModule import ColorFinder
 
 left_cal_folder="left_cal_images/"
 # capturing
@@ -15,6 +15,7 @@ def take_a_picture(cam):
         print("failed image capture")
 
     return ret,frame
+
 
 def take_dual_picture(cap_left,cap_right):
     # Capture one frame
@@ -174,7 +175,44 @@ def stereo_calibrate(mtx1, dist1, mtx2, dist2, left_cal_images, right_cal_images
 
     print(ret)
     return R, T
+def write_mat(mat,filename):
+    with open(filename,"w") as file:
+        for row in mat:
+            for i in range(len(row)):
+                if i==len(row)-1:
+                    file.write(str(row[i])+"\n")
+                else:
+                    file.write(str(row[i]) + " ")
+    return
 
+def read_mat(filename):
+    mat=[]
+    with open(filename,"r") as file:
+        lines=file.readlines()
+        for line in lines:
+            vals=line.split(" ")
+            for i in range(len(vals)):
+                print(vals[i])
+                vals[i]=float(vals[i])
+            mat.append(vals)
+    return mat
+
+def write_params(mtx1,mtx2,dist1,dist2,r,t):
+    write_mat(mtx1,"mtx1.txt")
+    write_mat(dist1,"dist1.txt")
+    write_mat(mtx2,"mtx2.txt")
+    write_mat(dist2,"dist2.txt")
+    write_mat(r,"R.txt")
+    write_mat(t,"T.txt")
+
+def get_params():
+    mtx1=read_mat("mtx1.txt")
+    dist1=read_mat("dist1.txt")
+    mtx2=read_mat("mtx2.txt")
+    dist2=read_mat("dist2.txt")
+    r=read_mat("R.txt")
+    t=read_mat("T.txt")
+    return mtx1,mtx2,dist1,dist2,r,t
 # image processing
 def sharpen_image(image):
     rows, cols = image.shape[:2]
@@ -199,53 +237,76 @@ def sharpen_image(image):
     return sharp1
 
 # object detection
-def find_object_center(image):
-    gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+def find_object_center(img):
 
-    # convert the grayscale image to binary image
-    ret, thresh = cv2.threshold(
-        gray_image, 120, 255, cv2.THRESH_BINARY
-    )
-    cv2.imshow("black&white", thresh)
-    cv2.waitKey(0)
-    cv2.destroyWindow("black&white")
-    # calculate moments of binary image
-    M = cv2.moments(thresh)
-    print(M)
+    # Webcam or video of a basketball shot
 
-    # calculate x,y coordinate of center
-    if M["m00"] != 0:
-        c_x = int(M["m10"] / M["m00"])
-        c_y = int(M["m01"] / M["m00"])
-    else:
-        print("object not found!")
-        return
+    myColorFinder = ColorFinder(False)
+    hsvVals = {'hmin':0, 'smin': 93, 'vmin':110, 'hmax': 35, 'smax':201, 'vmax':255}
 
-    # put text and highlight the center
-    cv2.circle(image, (c_x, c_y), 2, (255, 255, 255), -1)
-    cv2.putText(image, "center", (c_x - 18, c_y - 18), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+    imgColor, mask =myColorFinder.update(img, hsvVals)
+    img = cv2.resize(img, (1280, 720))
+    hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+    # Orange basketball mask (tune for your lighting)
+    lower = np.array([10, 100, 100])
+    upper = np.array([100, 200, 200])
+    mask = cv2.inRange(hsv, lower, upper)
+    mask = cv2.erode(mask, None, iterations=2)
+    mask = cv2.dilate(mask, None, iterations=2)
 
-    # print result
-    print(c_x, c_y)
-    # display the image
-    cv2.imshow("Image", image)
-    cv2.waitKey(0)
-    cv2.destroyWindow("Image")
-    return c_x,c_y
+
+    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if contours:
+        c = max(contours, key=cv2.contourArea)
+        ((x, y), radius) = cv2.minEnclosingCircle(c)
+        if radius > 5:
+            center = (int(x), int(y))
+            cv2.circle(img, center, int(radius), (0, 255, 0), 2)
+            print(x,y)
+            cv2.imshow('TechVidvan', img)
+            cv2.waitKey(0)
+            return x,y
+    return
 
 # object position
-def triangulate(mtx1, mtx2,image_points1,image_points2,frame1,frame2, R, T):
+
+def DLT(P1, P2, point1, point2):
+
+    A = [point1[1] * P1[2, :] - P1[1, :],
+             P1[0, :] - point1[0] * P1[2, :],
+             point2[1] * P2[2, :] - P2[1, :],
+             P2[0, :] - point2[0] * P2[2, :]
+             ]
+    A = np.array(A).reshape((4, 4))
+    # print('A: ')
+    # print(A)
+
+    B = A.transpose() @ A
+    from scipy import linalg
+    U, s, Vh = linalg.svd(B, full_matrices=False)
+
+    print('Triangulated point: ')
+    print(Vh[3, 0:3] / Vh[3, 3])
+    return Vh[3, 0:3] / Vh[3, 3]
+
+def triangulate(mtx1, mtx2,image_points1,image_points2, R, T):
     image_points1 = np.array(image_points1)
     image_points2 = np.array(image_points2)
+    # RT matrix for C1 is identity.
+    RT1 = np.concatenate([np.eye(3), [[0], [0], [0]]], axis=-1)
+    P1 = mtx1 @ RT1  # projection matrix for C1
 
-    plt.imshow(frame1[:, :, [2, 1, 0]])
-    plt.scatter(image_points1[:, 0], image_points1[:, 1])
-    plt.show()  # this call will cause a crash if you use cv.imshow() above. Comment out cv.imshow() to see this.
+    # RT matrix for C2 is the R and T obtained from stereo calibration.
+    RT2 = np.concatenate([R, T], axis=-1)
+    P2 = mtx2 @ RT2 # projection matrix for C2
 
-    plt.imshow(frame2[:, :, [2, 1, 0]])
-    plt.scatter(image_points2[:, 0], image_points2[:, 1])
-    plt.show()  # this call will cause a crash if you use cv.imshow() above. Comment out cv.imshow() to see this
+    p3ds=[]
+    for i in range(len(image_points1)):
+        p3ds.append(DLT(P1, P2, image_points1[i], image_points2[i]))
+    return p3ds
 
+
+def triangulate_single(mtx1, mtx2,image_point1,image_point2,R, T):
     # RT matrix for C1 is identity.
     RT1 = np.concatenate([np.eye(3), [[0], [0], [0]]], axis=-1)
     P1 = mtx1 @ RT1  # projection matrix for C1
@@ -254,30 +315,9 @@ def triangulate(mtx1, mtx2,image_points1,image_points2,frame1,frame2, R, T):
     RT2 = np.concatenate([R, T], axis=-1)
     P2 = mtx2 @ RT2  # projection matrix for C2
 
-    def DLT(P1, P2, point1, point2):
 
-        A = [point1[1] * P1[2, :] - P1[1, :],
-             P1[0, :] - point1[0] * P1[2, :],
-             point2[1] * P2[2, :] - P2[1, :],
-             P2[0, :] - point2[0] * P2[2, :]
-             ]
-        A = np.array(A).reshape((4, 4))
-        # print('A: ')
-        # print(A)
+    p3d = DLT(P1, P2, image_point1, image_point2)
 
-        B = A.transpose() @ A
-        from scipy import linalg
-        U, s, Vh = linalg.svd(B, full_matrices=False)
+    return p3d
 
-        print('Triangulated point: ')
-        print(Vh[3, 0:3] / Vh[3, 3])
-        return Vh[3, 0:3] / Vh[3, 3]
 
-    p3ds = []
-    for image_point1, image_point2 in zip(image_points1, image_points2):
-        _p3d = DLT(P1, P2, image_point1, image_point2)
-        p3ds.append(_p3d)
-    p3ds.append([0,0,0])
-    p3ds = np.array(p3ds)
-
-    return p3ds
