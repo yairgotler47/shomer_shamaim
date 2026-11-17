@@ -122,16 +122,13 @@ def write_mat(mat,filename):
     return
 
 def read_mat(filename):
-    mat=[]
-    with open(filename,"r") as file:
-        lines=file.readlines()
+    mat = []
+    with open(filename, "r") as file:
+        lines = file.readlines()
         for line in lines:
-            vals=line.split(" ")
-            for i in range(len(vals)):
-                print(vals[i])
-                vals[i]=float(vals[i])
+            vals = [float(v) for v in line.strip().split()]
             mat.append(vals)
-    return mat
+    return np.array(mat, dtype=np.float64)
 
 def write_params(mtx1,mtx2,dist1,dist2,r,t):
     write_mat(mtx1,"mtx1.txt")

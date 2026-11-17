@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 
 def define_matrices():
     dt = 0.033
-    g = 9.8
+    g = 980
     # Kalman Filter Matrices
     F = np.array([[1, 0, 0, dt, 0, 0], [0, 1, 0, 0, dt, 0], [0, 0, 1, 0, 0, dt],
               [0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]])
@@ -44,7 +44,7 @@ def predict_trajectory(state, P , F , B_u, Q):
 
     future_pts = []
 
-    for future_i in range(250):
+    for future_i in range(60):
         rollout_state = F @ rollout_state + B_u
         rollout_P = F @ rollout_P @ F.T + Q
 
@@ -55,13 +55,6 @@ def predict_trajectory(state, P , F , B_u, Q):
         fy = rollout_state[1]
         fz = rollout_state[2]
         future_pts.append((fx, fy, fz))
-
-
-    # # Draw predicted trajectory centerline (Red)
-    # for pt in future_pts:
-    #     px, py = int(pt[0]), int(pt[1])
-    #     if 0 <= px < width and 0 <= py < height:
-    #         cv2.circle(frame, (px, py), 1, (0, 0, 255), -1)
 
     return future_pts
 
