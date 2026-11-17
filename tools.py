@@ -5,10 +5,24 @@ import matplotlib.pyplot as plt
 
 left_cal_folder="left_cal_images/"
 # capturing
-def take_a_picture(cam):
+
+def open_camera_video(cam):
+    cam.set(3,1280)
+    cam.set(4,720)
+
+    while True:
+        success, img = cam.read()
+        cv2.imshow('Image',img)
+
+        if cv2.waitKey(1) == 32: #ord(" "):
+            break
+    return
+
+def take_a_picture(cam, name):
     ret,frame=cam.read()
     if ret:
         cv2.imshow("Image", frame)
+
         cv2.waitKey(0)
         cv2.destroyWindow("Image")
     else:
@@ -214,38 +228,42 @@ def sharpen_image(image):
     return sharp1
 
 # object detection
-def find_object_center(image):
+def find_object_center(image, name):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
 
     # convert the grayscale image to binary image
     ret, thresh = cv2.threshold(
         gray_image, 120, 255, cv2.THRESH_BINARY
     )
-    cv2.imshow("black&white", thresh)
-    cv2.waitKey(0)
-    cv2.destroyWindow("black&white")
+    #cv2.imshow("black&white", thresh)
+    #cv2.waitKey(0)
+    #cv2.destroyWindow("black&white")
     # calculate moments of binary image
     M = cv2.moments(thresh)
-    print(M)
+    #print(M)
 
     # calculate x,y coordinate of center
-    if M["m00"] != 0:
+    if M["m00"] == 0:
+        print("object not found!")
+        cv2.imshow("Tracking View", image)
+        return
+
+    else:
         c_x = int(M["m10"] / M["m00"])
         c_y = int(M["m01"] / M["m00"])
-    else:
-        print("object not found!")
-        return
 
     # put text and highlight the center
     cv2.circle(image, (c_x, c_y), 2, (255, 255, 255), -1)
     cv2.putText(image, "center", (c_x - 18, c_y - 18), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (255, 255, 255), 2)
+    #cv2.imwrite(name + "--.png", image)
+    cv2.imshow("Tracking View", image)
 
     # print result
     print(c_x, c_y)
     # display the image
-    cv2.imshow("Image", image)
-    cv2.waitKey(0)
-    cv2.destroyWindow("Image")
+    #cv2.imshow("Image", image)
+    #cv2.waitKey(0)
+    #cv2.destroyWindow("Image")
     return c_x,c_y
 
 # object position
