@@ -59,12 +59,11 @@ def process_stereo_video(left_cap, right_cap):
         if initialized:
             state, P = trajectory.predict(state, P, B_u, F, Q)
 
-        if left_point is not None and right_point is not None:
+        if left_point and right_point:
             center_point = triangulate.triangulate_single(
-                mtx1, mtx2, left_point, right_point, r, t)
+                mtx1, mtx2, dist1,dist2,left_point, right_point, r, t)
             center_points.append(center_point)
             observations += 1
-
             if not initialized:
                 state = np.array(
                     [center_point[0], center_point[1], center_point[2], 0.0, 0.0, 0.0])
@@ -72,19 +71,22 @@ def process_stereo_video(left_cap, right_cap):
             else:
                 state, P = trajectory.update(state, P, H, R, center_point)
 
-            if observations >= 10 and not future_points:
+            if observations == 10:
+                print("HERE!!!!!")
+                print(state)
                 future_points = trajectory.predict_trajectory(
                     state, P, F, B_u, Q)
-                print(f"future points: {future_points}")
+                
+                # print(f"future points: {future_points}")
 
         count += 1
-        if count == 200:
+        if count == 3000:
             break
 
     trajectory.show_3d_graph(center_points, future_points)
 
 
-left_cap = cv2.VideoCapture(0, cv2.CAP_DSHOW)
-right_cap = cv2.VideoCapture(2, cv2.CAP_DSHOW)
+left_cap = cv2.VideoCapture(1)
+right_cap = cv2.VideoCapture(2)
 # capture_and_calibrate_stereo(left_cap, right_cap)
 process_stereo_video(left_cap, right_cap)

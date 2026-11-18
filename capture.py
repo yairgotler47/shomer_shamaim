@@ -13,17 +13,18 @@ def take_a_picture(cam):
 
 
 def take_dual_picture(cap_left, cap_right):
-    ret_left, frame_left = cap_left.read()
-    ret_right, frame_right = cap_right.read()
+    while True:
+        ret_left, frame_left = cap_left.read()
+        ret_right, frame_right = cap_right.read()
 
-    if ret_left and ret_right:
-        cv2.imshow("Left Captured", frame_left)
-        cv2.imshow("Right Captured", frame_right)
-        cv2.waitKey(0)
-        cv2.destroyWindow("Left Captured")
-        cv2.destroyWindow("Right Captured")
-    else:
-        print("Failed to capture stereo image pair.")
+        if ret_left and ret_right:
+            cv2.imshow("Left Captured", frame_left)
+            cv2.imshow("Right Captured", frame_right)
+            if cv2.waitKey(1) != -1:
+                print("captured")
+                break
+        else:
+            print("Failed to capture stereo image pair.")
 
     return ret_left, frame_left, ret_right, frame_right
 

@@ -48,8 +48,6 @@ def predict_trajectory(state, P , F , B_u, Q):
         rollout_state = F @ rollout_state + B_u
         rollout_P = F @ rollout_P @ F.T + Q
 
-        if rollout_state[1] < 0:
-            break
 
         fx = rollout_state[0]
         fy = rollout_state[1]
@@ -69,5 +67,7 @@ def show_3d_graph(points3d_1, points3d_2):
     ax.scatter(x_2, y_2, z_2, c='green')
 
     ax.set_title('3D Scatter Plot')
+    ax.set_xlabel("X axis")
+    ax.set_ylabel("Y axis")
     plt.show()
     return

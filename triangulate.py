@@ -1,6 +1,6 @@
 import numpy as np
 from scipy import linalg
-
+import cv2
 # object position
 
 
@@ -39,7 +39,7 @@ def triangulate(mtx1, mtx2, image_points1, image_points2, R, T):
     return p3ds
 
 
-def triangulate_single(mtx1, mtx2, image_point1, image_point2, R, T):
+def triangulate_single(mtx1, mtx2,dist1,dist2, image_point1, image_point2, R, T):
     # RT matrix for C1 is identity.
     RT1 = np.concatenate([np.eye(3), [[0], [0], [0]]], axis=-1)
     P1 = mtx1 @ RT1  # projection matrix for C1
@@ -48,6 +48,11 @@ def triangulate_single(mtx1, mtx2, image_point1, image_point2, R, T):
     RT2 = np.concatenate([R, T], axis=-1)
     P2 = mtx2 @ RT2  # projection matrix for C2
 
-    p3d = DLT(P1, P2, image_point1, image_point2)
+    p1 = np.array([[image_point1]])
+    p2 = np.array([[image_point2]])
+
+    undist1=cv2.undistortPoints(p1,mtx1,dist1,P=mtx1)[0][0]
+    undist2=cv2.undistortPoints(p2,mtx2,dist2,P=mtx2)[0][0]
+    p3d = DLT(P1, P2, undist1, undist2)
 
     return p3d

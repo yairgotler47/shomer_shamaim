@@ -28,8 +28,8 @@ def find_object_center(img, winname):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # values from find_hsv.py
-    lower = np.array([9, 28, 0])
-    upper = np.array([100, 247, 248])
+    lower = np.array([17, 165, 105])
+    upper = np.array([25, 255, 255])
 
     mask = cv2.inRange(hsv, lower, upper)
     mask = cv2.erode(mask, None, iterations=2)
