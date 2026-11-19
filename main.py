@@ -1,4 +1,6 @@
 import cv2
+from matplotlib import pyplot as plt
+
 import tools
 import numpy as np
 CAL_IMAGE_NUM=15
@@ -10,21 +12,23 @@ def capture_and_calibrate_stereo(cap_left,cap_right):
 
     r,t=tools.stereo_calibrate(mtx1,dist1,mtx2,dist2,left_images,right_images)
     tools.write_params(mtx1,mtx2,dist1,dist2,r,t)
+
 def process_video(camera):
-    tools.take_a_picture(camera,"background")
-    background = cv2.imread("background")
-    cv2.imshow("background",background)
-    cv2.waitKey(0)
-    cv2.destroyWindow("background")
+    img_arr = []
+    background = tools.take_a_picture(camera,"background")
+    #background = cv2.imread("background")
+    #cv2.imshow("background",background)
+    #cv2.waitKey(0)
+    #cv2.destroyWindow("background")
     count, success = 0, True
     center_points=[]
     while success:
         success, image = camera.read() # Read frame
-        if success and count%5==0:
+        if success and count%1==0:
             #subtract frame
-            image=cv2.subtract(image,background)
+            #image=cv2.subtract(image,background)
             #sharpen frame
-            image=tools.sharpen_image(image)
+            #image=tools.sharpen_image(image)
             #find ball center
             x,y=tools.find_object_center(image)
             center_points.append([x,y])
@@ -44,6 +48,8 @@ def process_stereo_video(left_cap,right_cap):
     cv2.destroyWindow("right background")
     count,success = 0,True
     center_points=[]
+    l_img_arr=[]
+    r_img_arr=[]
 
     while left_ret and right_ret:
         left_ret, left_frame = left_cap.read()
@@ -57,7 +63,9 @@ def process_stereo_video(left_cap,right_cap):
                 #sharpen frame
                 left_frame=tools.sharpen_image(left_frame)
                 #find ball center
-                left_point=tools.find_object_center(left_frame)
+                left_point =tools.find_object_center(left_frame)
+                center_coords = (int(left_point[0]), int(left_point[1]))
+                cv2.circle(left_frame, center_coords, 1, (0, 0, 255), -1)
 
             if right_ret:
                 #subtract frame
@@ -74,6 +82,14 @@ def process_stereo_video(left_cap,right_cap):
 
     return center_points
 
-left_cap=cv2.VideoCapture(1)
-right_cap=cv2.VideoCapture(2)
-print(process_stereo_video(left_cap, right_cap))
+
+#left_cap=cv2.VideoCapture(1)
+#right_cap=cv2.VideoCapture(2)
+#capture_and_calibrate_stereo(left_cap ,right_cap)
+
+#print(process_stereo_video(left_cap, right_cap))
+
+
+cam = cv2.VideoCapture(0, cv2.CAP_DSHOW)
+points = process_video(cam)
+cv2.destroyAllWindows()

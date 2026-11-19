@@ -2,10 +2,12 @@ import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 from cvzone.ColorModule import ColorFinder
+from mpl_toolkits import mplot3d
+
 
 left_cal_folder="left_cal_images/"
 # capturing
-def take_a_picture(cam):
+def take_a_picture(cam, name):
     ret,frame=cam.read()
     if ret:
         cv2.imshow("Image", frame)
@@ -242,7 +244,7 @@ def find_object_center(img):
     # Webcam or video of a basketball shot
 
     myColorFinder = ColorFinder(False)
-    hsvVals = {'hmin':0, 'smin': 93, 'vmin':110, 'hmax': 35, 'smax':201, 'vmax':255}
+    hsvVals = {'hmin':9, 'smin': 28, 'vmin':0, 'hmax': 100, 'smax':247, 'vmax':248}
 
     imgColor, mask =myColorFinder.update(img, hsvVals)
     img = cv2.resize(img, (1280, 720))
@@ -321,3 +323,16 @@ def triangulate_single(mtx1, mtx2,image_point1,image_point2,R, T):
     return p3d
 
 
+def show_3d_graph(points3d_1, points3d_2):
+    fig = plt.figure()
+    ax = plt.axes(projection='3d')
+
+    x_1, y_1, z_1 = zip(*points3d_1)
+    ax.scatter(x_1, y_1, z_1, c='red')
+
+    x_2, y_2, z_2 = zip(*points3d_2)
+    ax.scatter(x_2, y_2, z_2, c='green')
+
+    ax.set_title('3D Scatter Plot')
+    plt.show()
+    return
