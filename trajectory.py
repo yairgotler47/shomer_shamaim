@@ -1,28 +1,43 @@
-import cv2
 import numpy as np
 import matplotlib.pyplot as plt
 
-def define_matrices():
-    dt = 0.033
-    g = 980
-    # Kalman Filter Matrices
-    F = np.array([[1, 0, 0, dt, 0, 0], [0, 1, 0, 0, dt, 0], [0, 0, 1, 0, 0, dt],
-              [0, 0, 0, 1, 0, 0], [0, 0, 0, 0, 1, 0], [0, 0, 0, 0, 0, 1]])
-
-    B_u = np.array([0, -0.5 * g * (dt ** 2), 0, 0, -g * dt, 0])
-    H = np.array([[1, 0, 0, 0, 0, 0], [0, 1, 0, 0, 0, 0], [0, 0, 1, 0, 0, 0]])
+GRAVITY_CM_S2 = 980.0
 
 
-    # Process noise
-    Q = np.eye(6) * 0.05
-    # Measurement noise
+def init_filter_matrices():
+    H = np.array([
+        [1.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0, 0.0, 0.0],
+    ])
+
+    Q = np.diag([1.0, 1.0, 1.0, 15.0, 15.0, 15.0])
+
+    # Measurement noise (cm^2)
     R = np.eye(3) * 4.0
-    # Initial uncertainty
-    P = np.diag([4.0, 4.0, 4.0, 400.0, 400.0, 400.0])
 
-    return F,B_u,H,Q,R,P
+    # Initial state uncertainty
+    P = np.diag([4.0, 4.0, 4.0, 10000.0, 10000.0, 10000.0])
 
-def predict(state, P_mat,B_u, F ,Q):
+    return H, Q, R, P
+
+
+def build_motion_matrices(dt, g=GRAVITY_CM_S2):
+    F = np.array([
+        [1.0, 0.0, 0.0, dt,  0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0, dt,  0.0],
+        [0.0, 0.0, 1.0, 0.0, 0.0, dt],
+        [0.0, 0.0, 0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 0.0, 0.0, 1.0],
+    ])
+
+    B_u = np.array([0.0, -0.5 * g * (dt ** 2), 0.0, 0.0, -g * dt, 0.0])
+
+    return F, B_u
+
+
+def predict(state, P_mat, B_u, F, Q):
     state_pred = F @ state + B_u
     P_pred = F @ P_mat @ F.T + Q
     return state_pred, P_pred
@@ -37,37 +52,37 @@ def update(state_pred, P_pred, H, R, measurement):
     return state_upd, P_upd
 
 
-
-def predict_trajectory(state, P , F , B_u, Q):
+def predict_trajectory(state, P, Q, dt=0.033, steps=60):
+    F, B_u = build_motion_matrices(dt)
     rollout_state = state.copy()
     rollout_P = P.copy()
 
     future_pts = []
-
-    for future_i in range(60):
-        rollout_state = F @ rollout_state + B_u
-        rollout_P = F @ rollout_P @ F.T + Q
-
-
-        fx = rollout_state[0]
-        fy = rollout_state[1]
-        fz = rollout_state[2]
-        future_pts.append((fx, fy, fz))
+    for _ in range(steps):
+        rollout_state, rollout_P = predict(rollout_state, rollout_P, B_u, F, Q)
+        future_pts.append((rollout_state[0], rollout_state[1], rollout_state[2]))
 
     return future_pts
 
+
 def show_3d_graph(points3d_1, points3d_2):
+    if not points3d_1 and not points3d_2:
+        return
+
     fig = plt.figure()
-    ax = plt.axes(projection='3d')
+    ax = plt.axes(projection="3d")
 
-    x_1, y_1, z_1 = zip(*points3d_1)
-    ax.scatter(x_1, y_1, z_1, c='red')
+    if points3d_1:
+        x_1, y_1, z_1 = zip(*points3d_1)
+        ax.scatter(x_1, y_1, z_1, c="red", label="Observed")
 
-    x_2, y_2, z_2 = zip(*points3d_2)
-    ax.scatter(x_2, y_2, z_2, c='green')
+    if points3d_2:
+        x_2, y_2, z_2 = zip(*points3d_2)
+        ax.scatter(x_2, y_2, z_2, c="green", label="Predicted")
 
-    ax.set_title('3D Scatter Plot')
-    ax.set_xlabel("X axis")
-    ax.set_ylabel("Y axis")
+    ax.set_title("3D Trajectory (cm)")
+    ax.set_xlabel("X (cm)")
+    ax.set_ylabel("Y (cm)")
+    ax.set_zlabel("Z (cm)")
+    ax.legend()
     plt.show()
-    return
