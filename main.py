@@ -69,9 +69,12 @@ def process_stereo_video(left_cap, right_cap):
         if not (left_ret and right_ret):
             break
 
-        left_point = image_process.find_object_center(left_frame, "left_image")
-        right_point = image_process.find_object_center(
+        x1, y1, _ = image_process.find_object_center(left_frame, "left_image")
+        x2, y2, _ = image_process.find_object_center(
             right_frame, "right_image")
+
+        left_point = (x1, y1)
+        right_point = (x2, y2)
 
         if in_flight:
             dt = max(now - last_step_time, 1e-4)

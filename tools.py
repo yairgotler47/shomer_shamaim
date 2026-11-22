@@ -328,11 +328,34 @@ def show_3d_graph(points3d_1, points3d_2):
     ax = plt.axes(projection='3d')
 
     x_1, y_1, z_1 = zip(*points3d_1)
-    ax.scatter(x_1, y_1, z_1, c='red')
-
     x_2, y_2, z_2 = zip(*points3d_2)
+
+    plt.xlim = (0,100)
+    plt.ylim = (0,100)
+    plt.zlim = (0,100)
+
+    ax.scatter(x_1, y_1, z_1, c='red')
     ax.scatter(x_2, y_2, z_2, c='green')
 
     ax.set_title('3D Scatter Plot')
     plt.show()
     return
+
+def show_2d_graph(points2d):
+    fig = plt.figure()
+    ax = plt.axes()
+
+    x_1, y_1 = zip(*points2d)
+
+    order = np.arange(len(points2d))
+    ax.scatter(x_1, y_1, c=order, cmap="viridis")
+    plt.xlim(0, 700)
+    plt.ylim(0, 700)
+    ax.invert_yaxis()
+
+    ax.set_title('2D Scatter Plot')
+    plt.show()
+    return
+
+if __name__ == '__main__':
+    show_2d_graph([(1,1),(2,2),(3,3),(4,4),(5,5),(6,6)])
