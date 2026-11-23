@@ -86,3 +86,9 @@ def show_3d_graph(points3d_1, points3d_2):
     ax.set_zlabel("Z (cm)")
     ax.legend()
     plt.show()
+
+def calc_rotation(point3d,translation_vec):
+    curr_point=[point3d[0]+translation_vec[0],point3d[1]+translation_vec[1],point3d[1]+translation_vec[1]]
+    lat=np.arctan(curr_point[1]/curr_point[2])
+    pitch=np.arctan(curr_point[0]/curr_point[2])
+    return lat,pitch

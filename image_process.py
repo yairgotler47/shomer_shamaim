@@ -24,7 +24,7 @@ def sharpen_image(image):
     return sharp1
 
 # object detection
-def find_object_center(img, winname):
+def find_object_center(img, winname, flag):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # values from find_hsv.py
@@ -44,7 +44,11 @@ def find_object_center(img, winname):
             cv2.circle(img, center, int(radius), (0, 255, 0), 2)
             cv2.imshow(winname, img)
             cv2.waitKey(1)
-            return x, y
+            if flag:
+                return x, y, img
+            return x,y
     cv2.imshow(winname, img)
     cv2.waitKey(1)
+    if flag:
+        return None,None,None
     return None

@@ -1,0 +1,56 @@
+import cv2
+import image_process
+import os
+
+def process_video(cam):
+    points = []
+    images = []
+    ret, background = cam.read()
+    cv2.imshow("background", background)
+    cv2.waitKey(0)
+    cv2.destroyWindow("background")
+
+    count = 0
+    while ret:
+        ret, frame = cam.read()
+        if not (ret):
+            break
+        x,y,img = image_process.find_object_center(frame, "image")
+        point = (x,y)
+        print(point)
+        if x is not None and y is not None:
+            points.append(point)
+        if img is not None:
+            images.append(img)
+
+        count += 1
+        if count == 100:
+            break
+
+    return points, images
+
+def save_as_images(images, folder="saved_frames"):
+    valid_images = [img for img in images if img is not None]
+    if not valid_images:
+        print("No images in the folder")
+        return
+
+    os.makedirs(folder, exist_ok=True)
+    for idx, img in enumerate(valid_images):
+        filepath = os.path.join(folder, f"frame_{idx:03d}.png")
+        cv2.imwrite(filepath, img)
+    print(f"Saved {len(valid_images)} images to {folder}")
+
+if '__main__' == __name__:
+    cam = cv2.VideoCapture(0)
+    points, images = process_video(cam)
+    print(points)
+
+    for img in images:
+        cv2.imshow("Slideshow", img)
+        if cv2.waitKey(2000) & 0xFF == ord("q"):
+            break
+
+    save_as_images(images)
+
+    cv2.destroyAllWindows()

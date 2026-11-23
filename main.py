@@ -69,9 +69,8 @@ def process_stereo_video(left_cap, right_cap):
         if not (left_ret and right_ret):
             break
 
-        left_point = image_process.find_object_center(left_frame, "left_image")
-        right_point = image_process.find_object_center(
-            right_frame, "right_image")
+        left_point = image_process.find_object_center(left_frame, "left_image", False)
+        right_point = image_process.find_object_center(right_frame, "right_image", False)
 
         if in_flight:
             dt = max(now - last_step_time, 1e-4)
@@ -125,5 +124,5 @@ def process_stereo_video(left_cap, right_cap):
 
 left_cap = cv2.VideoCapture(1)
 right_cap = cv2.VideoCapture(2)
-# capture_and_calibrate_stereo(left_cap, right_cap)
+capture_and_calibrate_stereo(left_cap, right_cap)
 process_stereo_video(left_cap, right_cap)
