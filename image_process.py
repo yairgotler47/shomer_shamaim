@@ -28,27 +28,31 @@ def find_object_center(img, winname, flag):
     hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
 
     # values from find_hsv.py
-    lower = np.array([17, 165, 105])
-    upper = np.array([25, 255, 255])
+    lower = np.array([97, 90, 102])
+    upper = np.array([108, 255, 255])
+    
 
     mask = cv2.inRange(hsv, lower, upper)
     mask = cv2.erode(mask, None, iterations=2)
     mask = cv2.dilate(mask, None, iterations=2)
+    kernel = np.ones((5, 5), np.uint8)
+    mask = cv2.morphologyEx(mask, cv2.MORPH_OPEN, kernel)    # removes small white specks
+    mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)   # fills small holes
 
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if contours:
         c = max(contours, key=cv2.contourArea)
         ((x, y), radius) = cv2.minEnclosingCircle(c)
-        if radius > 5:
+        if radius > 10 and cv2.contourArea(c)>200:
             center = (int(x), int(y))
             cv2.circle(img, center, int(radius), (0, 255, 0), 2)
             cv2.imshow(winname, img)
             cv2.waitKey(1)
             if flag:
-                return x, y, img
+                return x, y, img , radius
             return x,y
     cv2.imshow(winname, img)
     cv2.waitKey(1)
     if flag:
-        return None,None,None
+        return None,None,None,None
     return None

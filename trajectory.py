@@ -52,7 +52,7 @@ def update(state_pred, P_pred, H, R, measurement):
     return state_upd, P_upd
 
 
-def predict_trajectory(state, P, Q, dt=0.033, steps=60):
+def predict_trajectory(state, P, Q, dt=0.033, steps=20):
     F, B_u = build_motion_matrices(dt)
     rollout_state = state.copy()
     rollout_P = P.copy()

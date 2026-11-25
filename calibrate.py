@@ -10,7 +10,7 @@ def calibrate_camera(images):
 
     rows = 10  # number of checkerboard rows.
     columns = 7  # number of checkerboard columns.
-    world_scaling = 1.8  # change this to the real world square size. Or not.
+    world_scaling = 2.3  # change this to the real world square size. Or not.
 
     # coordinates of squares in the checkerboard world space
     objp = np.zeros((rows * columns, 3), np.float32)
@@ -68,7 +68,7 @@ def stereo_calibrate(mtx1, dist1, mtx2, dist2, left_cal_images, right_cal_images
 
     rows = 10  # number of checkerboard rows.
     columns = 7  # number of checkerboard columns.
-    world_scaling = 1.8  # change this to the real world square size. Or not.
+    world_scaling = 2.3 # change this to the real world square size. Or not.
 
     # coordinates of squares in the checkerboard world space
     objp = np.zeros((rows * columns, 3), np.float32)

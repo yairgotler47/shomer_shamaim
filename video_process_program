@@ -29,7 +29,7 @@ def process_video(cam):
 
     return points, images
 
-def save_as_images(images, folder="saved_frames"):
+def save_as_images(images, folder="saved_frames", img_name = ""):
     valid_images = [img for img in images if img is not None]
     if not valid_images:
         print("No images in the folder")
@@ -37,12 +37,12 @@ def save_as_images(images, folder="saved_frames"):
 
     os.makedirs(folder, exist_ok=True)
     for idx, img in enumerate(valid_images):
-        filepath = os.path.join(folder, f"frame_{idx:03d}.png")
+        filepath = os.path.join(folder, f"frame_{img_name}_{idx:03d}.png")
         cv2.imwrite(filepath, img)
     print(f"Saved {len(valid_images)} images to {folder}")
 
 if '__main__' == __name__:
-    cam = cv2.VideoCapture(0)
+    cam = cv2.VideoCapture(1)
     points, images = process_video(cam)
     print(points)
 
